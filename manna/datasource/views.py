@@ -9,21 +9,66 @@ from controller.public.mysql_helper import BusinessMysql
 import logging
 import json
 import MySQLdb
+from django.core.paginator import Paginator
+from django.core import serializers
 
 logger = logging.getLogger('manna')
 
 class dataSource(APIView):
     def get(self, request):
-        pass
+        current = int(request.GET.get('current'))
+        size = int(request.GET.get('size'))
+        data = {}
+        database_list = InfoDatabase.objects.all()
+        print(database_list)
+        paginator = Paginator(database_list, size)
+        print(paginator)
+        try:
+            """
+            paginator.per_page  # 每页显示数量
+            paginator.count  # 数据总数
+            paginator.num_pages  # 总页数
+            paginator.page_range  # 页码范围
+            paginator.page  # 页码范围
+            """
+            data['total'] = paginator.count
+            database = paginator.page(current)
+            data['records'] = json.loads(serializers.serialize("json",database))
+            data["size"] = size
+            data["current"] = current
+            data["searchCount"] = 'true'
+            data['pages'] = int(paginator.count / size)
+            sub_data = {
+                "code" : 20000,
+                "data":data
+            }
+            return HttpResponse(json.dumps(sub_data))
+        except  Exception as e:
+            print(e)
+            return HttpResponse('fail')
     
     def post(self, request):
         form = InfoDatabaseSerializer(data=request.data)
-        print(form)
+        print(request.data)
+        tmp = request.data
+        #print(form)
+        sub_data = {
+            'code': 20000,
+            'data': {},
+            'msg': 'ok'
+        }
         if form.is_valid():
-            infodatabase = form.save()
-            return HttpResponse('success')
+            obj = InfoDatabase.objects.filter(dbname = tmp['dbname'])
+            print(obj)
+            if not obj:
+                infodatabase = form.save()
+            else:
+                sub_data['msg'] = 'database already exit!'
+            return HttpResponse(json.dumps(sub_data))
         else:
-            return HttpResponse('fail')
+            sub_data['msg'] = 'fail'
+            print(form.errors)
+            return HttpResponse(json.dumps(sub_data))
 
 class dataSourceTest(APIView):
     #根据主机，用户名，密码和数据库测试是否正常连接
@@ -35,17 +80,25 @@ class dataSourceTest(APIView):
             _host = form_data["host"]
             _user = form_data["user"]
             _passwd = form_data["passwd"]
-            _db = form_data["db"]
-           # print(_host, _user, _passwd, _db)
+            _dbname = form_data["dbname"]
+            #print(_host, _user, _passwd, _dbname)
+            sub_data = {
+               'code': 20000,
+               'data': {},
+               'msg': 'ok'
+           }
             try:
                 dtconn = MySQLdb.connect(host=_host, 
                                             user=_user, 
                                             passwd=_passwd, 
-                                            db=_db, 
+                                            db =_dbname, 
                                             init_command="set names utf8;set net_write_timeout=3600;", 
                                             charset='utf8' )
             except Exception as e:
                 dtconn = None
-            return HttpResponse('success')
+                print(e)
+                sub_data['msg'] = 'false'
+            #print(dtconn)
+            return HttpResponse(json.dumps(sub_data))
         else:
             return HttpResponse("fail")
