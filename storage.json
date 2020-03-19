@@ -94,8 +94,7 @@
                     },
                     {
                         "id": "workbench.action.files.saveAs",
-                        "label": "另存为(&&A)...",
-                        "enabled": false
+                        "label": "另存为(&&A)..."
                     },
                     {
                         "id": "workbench.action.files.saveAll",
@@ -107,7 +106,8 @@
                     },
                     {
                         "id": "workbench.action.toggleAutoSave",
-                        "label": "自动保存(&&U)"
+                        "label": "自动保存(&&U)",
+                        "checked": true
                     },
                     {
                         "id": "",
@@ -1454,9 +1454,9 @@
             "backupPath": "/hjfile/tjj/datax-admin/datachange/Backups/fe863408339abd96310ac9014e3eb0a6",
             "uiState": {
                 "mode": 1,
-                "x": 896,
-                "y": 57,
-                "width": 1024,
+                "x": 863,
+                "y": 61,
+                "width": 993,
                 "height": 1020
             }
         },
