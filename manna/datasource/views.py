@@ -1,4 +1,4 @@
-# coding:utf-8
+# -*- coding: utf-8 -*-
 from django.shortcuts import render
 from django.http import HttpResponse
 from rest_framework.views import APIView
@@ -10,7 +10,7 @@ import logging
 import json
 import MySQLdb
 from django.core.paginator import Paginator
-from django.core import serializers
+from django.forms.models import model_to_dict
 
 logger = logging.getLogger('manna')
 
@@ -33,11 +33,12 @@ class dataSource(APIView):
             """
             data['total'] = paginator.count
             database = paginator.page(current)
-            data['records'] = json.loads(serializers.serialize("json",database))
+            ret = database_list.values()
+            data['records'] =list(ret)
             data["size"] = size
             data["current"] = current
             data["searchCount"] = 'true'
-            data['pages'] = int(paginator.count / size)
+            data['pages'] = int(paginator.count / size) + 1
             sub_data = {
                 "code" : 20000,
                 "data":data
@@ -68,6 +69,44 @@ class dataSource(APIView):
         else:
             sub_data['msg'] = 'fail'
             print(form.errors)
+            return HttpResponse(json.dumps(sub_data))
+
+    def put(self, request):
+        id = (request.data)['id']
+        print(id)
+        _obj = InfoDatabase.objects.get(id=id)
+        bs = InfoDatabaseSerializer(data=request.data, instance=_obj)
+        sub_data = {
+            'code':20000,
+            'data':{},
+            'msg': 'ok'
+        }
+        if bs.is_valid():
+            bs.save()
+            return HttpResponse(json.dumps(sub_data))
+        else:
+            sub_data['msg'] = 'fail'
+            return HttpResponse(json.dumps(sub_data))
+            
+    
+    def delete(self, request):
+        sub_data = {
+            'code': 20000,
+            'data': {},
+            'msg':'ok'
+        }
+        try: 
+            idList = request.GET.get('idList')
+            print(idList)
+            InfoDatabase.objects.filter(id = int(idList)).delete()
+            sub_data = {
+                'code': 20000,
+                'data': {},
+                'msg':'ok'
+            }
+            return HttpResponse(json.dumps(sub_data))
+        except Exception as e:
+            sub_data['msg'] = 'fail'
             return HttpResponse(json.dumps(sub_data))
 
 class dataSourceTest(APIView):
